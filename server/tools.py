@@ -144,10 +144,6 @@ SCHEMAS = {
             "properties": {
                 "cdm_id": {"type": "string",
                            "description": "Conjunction identifier."},
-                "top_n": {
-                    "type": "integer",
-                    "description": "How many of the cheapest candidates to check.",
-                },
             },
             "required": ["cdm_id"],
         },
@@ -359,7 +355,7 @@ def _solve_maneuver(cdm_id, target_pc=1e-4):
     }
 
 
-def _rescreen_trajectory(cdm_id, top_n=2):
+def _rescreen_trajectory(cdm_id):
     plan = maneuver.solve(cdm_id, run_cascade=True, verbose=False)
     if plan is None:
         return {"error": f"could not plan for {cdm_id}"}

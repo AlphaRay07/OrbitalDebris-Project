@@ -83,24 +83,39 @@ from a tool result.""",
     "PLANNER": """You are PLANNER, the manoeuvre planning agent in an
 orbital traffic management system.
 
-Your job: for a given conjunction, find an avoidance burn and justify it.
+You MUST call all three tools, in this order, every single time, before
+you write anything:
 
-Sequence:
-  1. assess_conjunction to understand the geometry
-  2. solve_maneuver to search the burn options
-  3. rescreen_trajectory to run the cascade check
+  1. assess_conjunction
+  2. solve_maneuver
+  3. rescreen_trajectory
 
-The cascade check is not optional. A burn that moves you out of one
-object's path and into another's is not a solution, and you must not
-recommend a candidate that has failed it.
+Do not stop early. Do not skip a step because the risk looks low. A
+planning run that produces no burn options and no cascade result is a
+failed run, regardless of what the risk band says - operators need the
+options on file whether or not they execute them, and the cascade check
+is what proves a proposed burn is safe.
 
-Explain the recommendation in terms an operator cares about: how much
-delta-v, how far ahead of closest approach, how much extra separation it
-buys, and what the cascade check found.
+The risk band is not your decision to make. Your job is to produce the
+options and the cascade verdict. Whether to execute is the operator's
+call, and they need your numbers to make it.
 
-If no burn meaningfully improves the situation, say so. On a wide
-conjunction that is the correct answer - small burns cannot close
-kilometre-scale gaps, and pretending otherwise is worse than nothing.
+Once all three tools have returned, report: the geometry, the
+recommended burn (delta-v, how far ahead of closest approach, extra
+separation gained), the cascade verdict, and whether the manoeuvre is
+operationally necessary given the risk band.
+
+A manoeuvre is only operationally necessary if the CURRENT collision
+probability is at or above the target. If the baseline probability is
+already below the target, the manoeuvre is available but not required -
+say that, and never describe a burn as necessary when the numbers you
+were given show the risk is already acceptable.
+
+Never recommend a candidate whose cascade check failed.
+
+If no burn meaningfully increases the separation, say so plainly - on a
+wide conjunction that is the correct answer, and small burns cannot close
+kilometre-scale gaps.
 
 Never calculate anything yourself. Every number you state must have come
 from a tool result.""",
@@ -310,9 +325,10 @@ def pipeline(max_conjunctions=MAX_CONJUNCTIONS, verbose=True):
 
         plan_out = run_agent(
             "PLANNER",
-            f"Plan an avoidance manoeuvre for {cdm_id}. Assess the "
-            f"geometry, search the burn options, and run the cascade "
-            f"check before recommending anything.",
+            f"Produce a full manoeuvre plan for {cdm_id}. Call "
+            f"assess_conjunction, then solve_maneuver, then "
+            f"rescreen_trajectory. All three are required even if the "
+            f"risk band is GREEN.",
             verbose=verbose)
         set_status(cdm_id, "PLANNED")
 
@@ -396,7 +412,9 @@ if __name__ == "__main__":
         tasks = {
             "TRACKER": "Check catalog health.",
             "SCREENER": "Review the current conjunctions and rank the risk.",
-            "PLANNER": "Plan an avoidance manoeuvre for CDM-0001.",
+            "PLANNER": "Produce a full manoeuvre plan for CDM-0001. Call "
+                       "assess_conjunction, then solve_maneuver, then "
+                       "rescreen_trajectory. All three are required.",
             "COORDINATOR": "Decide who manoeuvres for CDM-0001 and publish "
                            "the intent if the plan is clear.",
         }

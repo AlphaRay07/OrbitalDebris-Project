@@ -295,8 +295,9 @@ def run_single_agent(agent: str, background: BackgroundTasks,
                    "are fit to act on.",
         "SCREENER": "Review the current conjunctions and say whether any "
                     "response is warranted.",
-        "PLANNER": f"Plan an avoidance manoeuvre for {cdm_id}, including "
-                   f"the cascade check.",
+        "PLANNER": f"Produce a full manoeuvre plan for {cdm_id}. Call "
+                   f"assess_conjunction, then solve_maneuver, then "
+                   f"rescreen_trajectory. All three are required.",
         "COORDINATOR": f"Decide who manoeuvres for {cdm_id} and publish "
                        f"the intent if the plan is clear.",
     }
@@ -319,6 +320,7 @@ def agents_status():
         "model_calls_made": agents.llm.call_count(),
         "agents": list(agents.PROMPTS),
         "events_buffered": len(agents.BUS.history(999)),
+        "providers": agents.llm.providers_status(),
     }
 
 
