@@ -20,12 +20,17 @@ import numpy as np
 # frame. In-track is much larger than the others because along-track
 # position is the least well-determined part of any orbit. Real operators
 # would supply their own orbit determination covariance instead.
-SIGMA_AT_EPOCH_M = {"radial": 100.0, "in_track": 500.0, "cross_track": 100.0}
+SIGMA_AT_EPOCH_M = {"radial": 300.0, "in_track": 1500.0, "cross_track": 300.0}
 
 # Uncertainty grows as the tracking data ages. Between linear and
 # quadratic; 1.5 is a common engineering choice.
 GROWTH_EXPONENT = 1.5
 REFERENCE_AGE_H = 24.0
+
+# Floor on the 1-sigma values. Very fresh tracking data would otherwise
+# scale the uncertainty down to a few tens of metres, which no real orbit
+# determination process achieves for an uncooperative object.
+MIN_SIGMA_M = 150.0
 
 # --- Assumption 2: hard-body radius -----------------------------------
 # The GP feed has no RCS_SIZE field (that lives in CelesTrak's separate
@@ -57,18 +62,25 @@ def epoch_age_hours(epoch_iso, now=None):
     return max(0.0, (now - dt).total_seconds() / 3600.0)
 
 
-def covariance_rtn(age_hours):
+def covariance_rtn(age_hours, lead_hours=0.0):
     """3x3 diagonal position covariance in the RTN frame, in m^2.
+
+    Uncertainty grows with two things: how old the tracking data is, and
+    how far ahead of it we are predicting. At a 72 hour screening horizon
+    the lead time dominates - which is why real conjunction assessment
+    covariances reach kilometres, not tens of metres.
 
     Diagonal because we have no cross-correlation information to work
     with - another stated simplification.
     """
-    scale = (max(age_hours, 1.0) / REFERENCE_AGE_H) ** GROWTH_EXPONENT
+    effective_h = max(age_hours, 1.0) + max(lead_hours, 0.0)
+    scale = (effective_h / REFERENCE_AGE_H) ** GROWTH_EXPONENT
     s = np.array([
         SIGMA_AT_EPOCH_M["radial"],
         SIGMA_AT_EPOCH_M["in_track"],
         SIGMA_AT_EPOCH_M["cross_track"],
     ]) * scale
+    s = np.maximum(s, MIN_SIGMA_M)
     return np.diag(s ** 2)
 
 
@@ -81,10 +93,10 @@ def rtn_basis(r, v):
     return np.vstack([R, T, N])
 
 
-def covariance_eci(r, v, age_hours):
+def covariance_eci(r, v, age_hours, lead_hours=0.0):
     """Rotate the RTN covariance into the inertial frame."""
     B = rtn_basis(r, v)
-    C_rtn = covariance_rtn(age_hours)
+    C_rtn = covariance_rtn(age_hours, lead_hours)
     return B.T @ C_rtn @ B
 
 
@@ -191,17 +203,20 @@ def risk_band(pc):
 
 # ------------------------------------------------------------- top level
 
-def assess(r_a, v_a, r_b, v_b, meta_a, meta_b, now=None):
+def assess(r_a, v_a, r_b, v_b, meta_a, meta_b, now=None, lead_hours=0.0):
     """Full assessment for one conjunction.
 
     Positions in km, velocities in km/s, both in the inertial frame at TCA.
+    lead_hours is the time from now to TCA, which drives most of the
+    uncertainty growth at long screening horizons.
+
     Returns the encounter-plane payload the API contract promises.
     """
     age_a = epoch_age_hours(meta_a.get("epoch"), now)
     age_b = epoch_age_hours(meta_b.get("epoch"), now)
 
-    cov_a = covariance_eci(r_a, v_a, age_a)
-    cov_b = covariance_eci(r_b, v_b, age_b)
+    cov_a = covariance_eci(r_a, v_a, age_a, lead_hours)
+    cov_b = covariance_eci(r_b, v_b, age_b, lead_hours)
 
     ep = encounter_plane(r_a, v_a, r_b, v_b, cov_a, cov_b)
     hbr = hard_body_radius_m(meta_a, meta_b)
@@ -218,6 +233,7 @@ def assess(r_a, v_a, r_b, v_b, meta_a, meta_b, now=None):
         "risk": risk_band(pc),
         "tle_age_hours": {"primary": round(age_a, 1),
                           "secondary": round(age_b, 1)},
+        "lead_hours": round(lead_hours, 1),
     }
 
 
@@ -228,7 +244,9 @@ def assumptions():
         "sigma_at_epoch_m": SIGMA_AT_EPOCH_M,
         "growth_exponent": GROWTH_EXPONENT,
         "reference_age_hours": REFERENCE_AGE_H,
+        "min_sigma_m": MIN_SIGMA_M,
         "hbr_source": "default 1 m per object; GP feed has no RCS_SIZE",
+        "growth_driver": "TLE age + time to TCA (lead time dominates at 72h)",
         "method": "Foster 2D encounter plane, numerical polar integration",
     }
 
