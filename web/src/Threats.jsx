@@ -7,16 +7,23 @@ export default function Threats({ selectedId, onSelectThreat }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    getConjunctions()
-      .then((data) => {
-        setConjunctions(data || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+    const fetchThreats = () => {
+      getConjunctions()
+        .then((data) => {
+          setConjunctions(data || []);
+          setLoading(false);
+        })
+        .catch((err) => {
+          setError(err.message);
+          setLoading(false);
+        });
+    };
+
+    fetchThreats();
+    const interval = setInterval(fetchThreats, 3000);
+    return () => clearInterval(interval);
   }, []);
+
 
   if (loading) {
     return (

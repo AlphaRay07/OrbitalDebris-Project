@@ -1,0 +1,38 @@
+{
+  "cdm_id": "CDM-0002",
+  "status": "COORDINATED",
+  "both_maneuverable": true,
+  "decision": {
+    "responsible_operator": "OPERATOR_B",
+    "rule_applied": "CREWED_PRIORITY",
+    "rule_text": "Crewed vehicles outrank active payloads; the active payload maneuvers.",
+    "delta_v_mms": 3.0,
+    "tie_break_used": false
+  },
+  "transcript": [
+    {
+      "round": 1,
+      "from": "OPERATOR_A",
+      "to": "OPERATOR_B",
+      "message": "Conjunction CDM-0002 at Pc 4.7e-5. Our asset is crewed. Requesting you assume maneuver responsibility."
+    },
+    {
+      "round": 1,
+      "from": "OPERATOR_B",
+      "to": "OPERATOR_A",
+      "message": "Acknowledged. Checking our maneuver cost before accepting."
+    },
+    {
+      "round": 2,
+      "from": "OPERATOR_B",
+      "to": "OPERATOR_A",
+      "message": "Our cheapest compliant burn is 3.0 mm/s, cascade check clear. Accepting responsibility under CREWED_PRIORITY."
+    },
+    {
+      "round": 2,
+      "from": "OPERATOR_A",
+      "to": "OPERATOR_B",
+      "message": "Confirmed. Publishing intent to the shared ledger."
+    }
+  ]
+}

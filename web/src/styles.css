@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #070A0F;
+  color: #C8D4E0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  overflow: hidden;
+}
+
+/* Custom Mission Control Dark Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1E2833 #070A0F;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070A0F;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E2833;
+  border-radius: 3px;
+  border: 1px solid #0E141C;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3DD68C;
+}
+
+::-webkit-scrollbar-corner {
+  background: #070A0F;
+}
+
+

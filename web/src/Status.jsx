@@ -7,16 +7,23 @@ export default function Status() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        getStatus()
-            .then((data) => {
-                setStatus(data);
-                setLoading(false);
-            })
-            .catch((err) => {
-                setError(err.message);
-                setLoading(false);
-            });
+        const fetchStatus = () => {
+            getStatus()
+                .then((data) => {
+                    setStatus(data);
+                    setLoading(false);
+                })
+                .catch((err) => {
+                    setError(err.message);
+                    setLoading(false);
+                });
+        };
+
+        fetchStatus();
+        const interval = setInterval(fetchStatus, 3000);
+        return () => clearInterval(interval);
     }, []);
+
 
     if (loading) {
         return <div className="p-3 bg-[#0E141C] text-[#6B7A8C] font-mono text-sm border-b border-[#1E2833]">Loading telemetry status...</div>;

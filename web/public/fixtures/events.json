@@ -1,0 +1,127 @@
+[
+  {
+    "seq": 1,
+    "ts": "2026-09-12T06:00:00Z",
+    "agent": "TRACKER",
+    "level": "info",
+    "message": "Catalog refreshed from CelesTrak.",
+    "tool_call": {
+      "name": "ingest_catalog",
+      "args": {
+        "groups": 5
+      }
+    },
+    "tool_result": {
+      "objects": 27431,
+      "median_age_h": 8.4
+    }
+  },
+  {
+    "seq": 2,
+    "ts": "2026-09-12T06:00:04Z",
+    "agent": "TRACKER",
+    "level": "warn",
+    "message": "3 objects have TLEs older than 72h; covariance inflated.",
+    "tool_call": null,
+    "tool_result": null
+  },
+  {
+    "seq": 3,
+    "ts": "2026-09-12T06:00:09Z",
+    "agent": "SCREENER",
+    "level": "info",
+    "message": "Screening ISS against full catalog over 72h.",
+    "tool_call": {
+      "name": "screen_asset",
+      "args": {
+        "asset": "25544",
+        "horizon_h": 72,
+        "threshold_km": 5
+      }
+    },
+    "tool_result": {
+      "candidates": 5,
+      "runtime_s": 11.8
+    }
+  },
+  {
+    "seq": 4,
+    "ts": "2026-09-12T06:00:22Z",
+    "agent": "SCREENER",
+    "level": "alert",
+    "message": "CDM-0001 exceeds the red threshold at Pc 3.2e-4.",
+    "tool_call": {
+      "name": "compute_pc",
+      "args": {
+        "cdm_id": "CDM-0001"
+      }
+    },
+    "tool_result": {
+      "pc": 0.00032,
+      "risk": "RED"
+    }
+  },
+  {
+    "seq": 5,
+    "ts": "2026-09-12T06:00:31Z",
+    "agent": "PLANNER",
+    "level": "info",
+    "message": "Searching 64 burn combinations.",
+    "tool_call": {
+      "name": "solve_maneuver",
+      "args": {
+        "cdm_id": "CDM-0001",
+        "target_pc": 0.0001
+      }
+    },
+    "tool_result": {
+      "candidates": 8,
+      "feasible": 6
+    }
+  },
+  {
+    "seq": 6,
+    "ts": "2026-09-12T06:00:47Z",
+    "agent": "PLANNER",
+    "level": "alert",
+    "message": "MNV-004 rejected: creates a new conjunction with STARLINK-4127 at 810 m.",
+    "tool_call": {
+      "name": "rescreen_ephemeris",
+      "args": {
+        "candidate": "MNV-004",
+        "days": 7
+      }
+    },
+    "tool_result": {
+      "verdict": "FAIL",
+      "pc": 0.00014
+    }
+  },
+  {
+    "seq": 7,
+    "ts": "2026-09-12T06:00:52Z",
+    "agent": "PLANNER",
+    "level": "info",
+    "message": "Recommending MNV-003: 3.0 mm/s retrograde, 1 orbit before TCA.",
+    "tool_call": null,
+    "tool_result": null
+  },
+  {
+    "seq": 8,
+    "ts": "2026-09-12T06:00:58Z",
+    "agent": "COORDINATOR",
+    "level": "info",
+    "message": "Secondary is non-maneuverable debris; no negotiation required.",
+    "tool_call": {
+      "name": "publish_intent",
+      "args": {
+        "cdm_id": "CDM-0001",
+        "mnv_id": "MNV-003"
+      }
+    },
+    "tool_result": {
+      "seq": 2,
+      "entry_hash": "7b2d90f4"
+    }
+  }
+]

@@ -2,12 +2,15 @@ import { useState } from "react";
 import Status from "./Status";
 import Threats from "./Threats";
 import ThreatDetails from "./ThreatDetails";
+import PlannerView from "./PlannerView";
 import GlobeView from "./GlobeView";
 import Scrubber from "./Scrubber";
+import AgentFeed from "./AgentFeed";
+import LedgerTable from "./LedgerTable";
 
 export default function App() {
   const [selectedCdmId, setSelectedCdmId] = useState("CDM-0001");
-  const [showDetails, setShowDetails] = useState(true);
+  const [activeTab, setActiveTab] = useState("DETAILS"); // "DETAILS" | "PLANNER" | "NONE"
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [ephemerisMeta, setEphemerisMeta] = useState({
@@ -26,7 +29,9 @@ export default function App() {
   const handleSelectThreat = (id, summary) => {
     setSelectedCdmId(id);
     setSelectedThreatSummary(summary || null);
-    setShowDetails(true);
+    if (activeTab === "NONE") {
+      setActiveTab("DETAILS");
+    }
     setIsPlaying(false);
   };
 
@@ -35,20 +40,74 @@ export default function App() {
       {/* Top Telemetry Status Bar */}
       <Status />
 
+      {/* Navigation Sub-header / Mode Switcher */}
+      <div className="bg-[#0E141C] border-b border-[#1E2833] px-4 py-1.5 flex items-center justify-between font-mono text-xs z-10">
+        <div className="flex items-center gap-2">
+          <span className="text-[#6B7A8C] font-bold text-[10px] uppercase tracking-wider">VIEW MODE:</span>
+          <button
+            onClick={() => setActiveTab("DETAILS")}
+            className={`px-3 py-1 rounded text-xs font-bold transition-colors cursor-pointer ${
+              activeTab === "DETAILS"
+                ? "bg-[#1E2833] text-white border border-[#6B7A8C]/50"
+                : "hover:bg-[#1E2833]/50 text-[#6B7A8C]"
+            }`}
+          >
+            📋 THREAT ANALYTICS
+          </button>
+          <button
+            onClick={() => setActiveTab("PLANNER")}
+            className={`px-3 py-1 rounded text-xs font-bold transition-colors cursor-pointer ${
+              activeTab === "PLANNER"
+                ? "bg-emerald-950 text-[#3DD68C] border border-emerald-800/50"
+                : "hover:bg-[#1E2833]/50 text-[#6B7A8C]"
+            }`}
+          >
+            🚀 AVOIDANCE PLANNER
+          </button>
+          <button
+            onClick={() => setActiveTab("LEDGER")}
+            className={`px-3 py-1 rounded text-xs font-bold transition-colors cursor-pointer ${
+              activeTab === "LEDGER"
+                ? "bg-blue-950 text-blue-400 border border-blue-800/50"
+                : "hover:bg-[#1E2833]/50 text-[#6B7A8C]"
+            }`}
+          >
+            🔗 INTENT LEDGER
+          </button>
+        </div>
+
+        <div className="text-[11px] text-[#6B7A8C]">
+          SELECTED THREAT: <span className="text-[#3DD68C] font-bold">{selectedCdmId}</span>
+        </div>
+      </div>
+
       {/* Main Mission Operations Dashboard Area */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
         {/* Left Panel: Conjunction Threats List */}
         <Threats
           selectedId={selectedCdmId}
           onSelectThreat={handleSelectThreat}
         />
 
-        {/* Threat Details Panel Popup / Drawer (to the right of Threat List) */}
-        {showDetails && (
+        {/* Panel Popup / Drawer (Threat Details vs Planner View vs Ledger Table) */}
+        {activeTab === "DETAILS" && (
           <ThreatDetails
             conjunctionId={selectedCdmId}
             threatSummary={selectedThreatSummary}
-            onClose={() => setShowDetails(false)}
+            onClose={() => setActiveTab("NONE")}
+          />
+        )}
+
+        {activeTab === "PLANNER" && (
+          <PlannerView
+            cdmId={selectedCdmId}
+            onClose={() => setActiveTab("NONE")}
+          />
+        )}
+
+        {activeTab === "LEDGER" && (
+          <LedgerTable
+            onClose={() => setActiveTab("NONE")}
           />
         )}
 
@@ -76,6 +135,11 @@ export default function App() {
           />
         </div>
       </div>
+
+      {/* Bottom Live Agent Reasoning & Tool Stream Feed */}
+      <AgentFeed selectedCdmId={selectedCdmId} />
     </div>
   );
 }
+
+

@@ -1,0 +1,24 @@
+{
+  "catalog_objects": 27431,
+  "debris_objects": 14208,
+  "last_ingest": "2026-09-12T05:46:00Z",
+  "catalog_source": "celestrak",
+  "median_tle_age_hours": 8.4,
+  "screening": {
+    "state": "complete",
+    "progress": 1.0,
+    "asset_id": "25544",
+    "horizon_hours": 72,
+    "threshold_km": 5.0,
+    "pairs_screened": 27430,
+    "runtime_s": 11.8,
+    "completed_at": "2026-09-12T05:58:00Z"
+  },
+  "counts": {
+    "red": 3,
+    "amber": 4,
+    "green": 1
+  },
+  "demo_mode": true,
+  "mock_agents": false
+}

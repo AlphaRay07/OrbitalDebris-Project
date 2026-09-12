@@ -1,0 +1,226 @@
+[
+  {
+    "id": "CDM-0001",
+    "primary": {
+      "norad_id": "25544",
+      "name": "ISS (ZARYA)",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "NASA / International Partner",
+      "tle_age_hours": 3.1
+    },
+    "secondary": {
+      "norad_id": "339001",
+      "name": "SIM-DEBRIS-001 (COSMOS 1408 ASAT DEB)",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 4.5
+    },
+    "tca": "2026-09-13T13:12:00Z",
+    "miss_distance_km": 0.142,
+    "relative_speed_kms": 14.82,
+    "pc": 0.00842,
+    "risk": "RED",
+    "status": "TRIAGED",
+    "simulated": true
+  },
+  {
+    "id": "CDM-0002",
+    "primary": {
+      "norad_id": "44900",
+      "name": "STARLINK-1199",
+      "object_type": "PAYLOAD",
+      "size_class": "MEDIUM",
+      "maneuverable": true,
+      "operator": "SpaceX",
+      "tle_age_hours": 2.4
+    },
+    "secondary": {
+      "norad_id": "44058",
+      "name": "ONEWEB-0012",
+      "object_type": "PAYLOAD",
+      "size_class": "MEDIUM",
+      "maneuverable": true,
+      "operator": "Eutelsat OneWeb",
+      "tle_age_hours": 5.0
+    },
+    "tca": "2026-09-13T16:45:30Z",
+    "miss_distance_km": 0.285,
+    "relative_speed_kms": 11.45,
+    "pc": 0.00185,
+    "risk": "RED",
+    "status": "TRIAGED",
+    "simulated": false
+  },
+  {
+    "id": "CDM-0003",
+    "primary": {
+      "norad_id": "20580",
+      "name": "HUBBLE SPACE TELESCOPE",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "NASA / ESA",
+      "tle_age_hours": 6.8
+    },
+    "secondary": {
+      "norad_id": "22285",
+      "name": "SL-16 R/B DEBRIS",
+      "object_type": "ROCKET BODY",
+      "size_class": "MEDIUM",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 12.1
+    },
+    "tca": "2026-09-13T21:04:12Z",
+    "miss_distance_km": 1.250,
+    "relative_speed_kms": 12.30,
+    "pc": 0.000074,
+    "risk": "AMBER",
+    "status": "TRIAGED",
+    "simulated": false
+  },
+  {
+    "id": "CDM-0004",
+    "primary": {
+      "norad_id": "39634",
+      "name": "SENTINEL-1A",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "ESA",
+      "tle_age_hours": 4.1
+    },
+    "secondary": {
+      "norad_id": "33421",
+      "name": "FENGYUN 1C DEB",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 18.3
+    },
+    "tca": "2026-09-14T01:15:00Z",
+    "miss_distance_km": 1.820,
+    "relative_speed_kms": 13.04,
+    "pc": 0.000041,
+    "risk": "AMBER",
+    "status": "TRIAGED",
+    "simulated": false
+  },
+  {
+    "id": "CDM-0005",
+    "primary": {
+      "norad_id": "39084",
+      "name": "LANDSAT 8",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "USGS / NASA",
+      "tle_age_hours": 7.2
+    },
+    "secondary": {
+      "norad_id": "34677",
+      "name": "COSMOS 2251 DEB",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 14.2
+    },
+    "tca": "2026-09-14T04:22:10Z",
+    "miss_distance_km": 2.150,
+    "relative_speed_kms": 11.86,
+    "pc": 0.000029,
+    "risk": "AMBER",
+    "status": "TRIAGED",
+    "simulated": false
+  },
+  {
+    "id": "CDM-0006",
+    "primary": {
+      "norad_id": "25994",
+      "name": "TERRA (EOS AM-1)",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "NASA",
+      "tle_age_hours": 3.9
+    },
+    "secondary": {
+      "norad_id": "58901",
+      "name": "CZ-6A DEB CLUSTER",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 2.8
+    },
+    "tca": "2026-09-14T08:50:00Z",
+    "miss_distance_km": 0.190,
+    "relative_speed_kms": 14.85,
+    "pc": 0.00560,
+    "risk": "RED",
+    "status": "TRIAGED",
+    "simulated": false
+  },
+  {
+    "id": "CDM-0007",
+    "primary": {
+      "norad_id": "57801",
+      "name": "KUIPER-SAT-01",
+      "object_type": "PAYLOAD",
+      "size_class": "MEDIUM",
+      "maneuverable": true,
+      "operator": "Amazon Kuiper",
+      "tle_age_hours": 5.4
+    },
+    "secondary": {
+      "norad_id": "52100",
+      "name": "STARLINK-3012",
+      "object_type": "PAYLOAD",
+      "size_class": "MEDIUM",
+      "maneuverable": true,
+      "operator": "SpaceX",
+      "tle_age_hours": 4.0
+    },
+    "tca": "2026-09-14T12:05:40Z",
+    "miss_distance_km": 1.120,
+    "relative_speed_kms": 10.90,
+    "pc": 0.000089,
+    "risk": "AMBER",
+    "status": "TRIAGED",
+    "simulated": false
+  },
+  {
+    "id": "CDM-0008",
+    "primary": {
+      "norad_id": "25544",
+      "name": "ISS (ZARYA)",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "NASA",
+      "tle_age_hours": 6.2
+    },
+    "secondary": {
+      "norad_id": "34012",
+      "name": "IRIDIUM 33 DEB",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 22.7
+    },
+    "tca": "2026-09-14T19:30:00Z",
+    "miss_distance_km": 18.500,
+    "relative_speed_kms": 9.55,
+    "pc": 1.2e-12,
+    "risk": "GREEN",
+    "status": "TRIAGED",
+    "simulated": false
+  }
+]
