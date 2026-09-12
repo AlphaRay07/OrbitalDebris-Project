@@ -16,6 +16,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
+import agents
 import db
 import ingest
 import maneuver
@@ -250,23 +251,136 @@ def ledger():
     return fixture("ledger.json")
 
 
+# -------------------------------------------------------------- agents
+
+@app.post("/api/agents/run")
+def run_agents(background: BackgroundTasks, width: int = 1):
+    """Run the agent pipeline in the background.
+
+    A full run is 8-12 model calls and a couple of minutes, most of it
+    cascade re-screening. The frontend watches /api/events for progress
+    rather than waiting on this response.
+
+    width is how many conjunctions to take through the full lifecycle.
+    Default 1: running all sixteen would be fifty model calls and many
+    minutes, which is wrong for a live demo and wrong for a free-tier
+    rate limit.
+    """
+    if not db.has_conjunctions():
+        raise HTTPException(409, "no screening results - POST /api/screen first")
+
+    def job():
+        try:
+            agents.pipeline(max_conjunctions=width, verbose=True)
+        except Exception as e:
+            print(f"[agents] {type(e).__name__}: {e}")
+            agents.emit("SYSTEM", f"Pipeline failed: {e}", level="alert")
+
+    background.add_task(job)
+    return {"state": "running", "width": width,
+            "mock_agents": agents.llm.MOCK or not agents.llm.available()}
+
+
+@app.post("/api/agents/{agent}")
+def run_single_agent(agent: str, background: BackgroundTasks,
+                     cdm_id: str = "CDM-0001"):
+    """Run one agent. Useful for stepping through the demo."""
+    name = agent.upper()
+    if name not in agents.PROMPTS:
+        raise HTTPException(404, f"unknown agent: {agent}. "
+                                 f"One of {list(agents.PROMPTS)}")
+
+    tasks = {
+        "TRACKER": "Check catalog health and confirm the screening results "
+                   "are fit to act on.",
+        "SCREENER": "Review the current conjunctions and say whether any "
+                    "response is warranted.",
+        "PLANNER": f"Plan an avoidance manoeuvre for {cdm_id}, including "
+                   f"the cascade check.",
+        "COORDINATOR": f"Decide who manoeuvres for {cdm_id} and publish "
+                       f"the intent if the plan is clear.",
+    }
+
+    def job():
+        try:
+            agents.run_agent(name, tasks[name], verbose=True)
+        except Exception as e:
+            print(f"[{name}] {type(e).__name__}: {e}")
+
+    background.add_task(job)
+    return {"state": "running", "agent": name}
+
+
+@app.get("/api/agents/status")
+def agents_status():
+    return {
+        "mock_agents": agents.llm.MOCK or not agents.llm.available(),
+        "model": agents.llm.MODEL,
+        "model_calls_made": agents.llm.call_count(),
+        "agents": list(agents.PROMPTS),
+        "events_buffered": len(agents.BUS.history(999)),
+    }
+
+
 # -------------------------------------------------------------- events
 
 @app.get("/api/events")
-async def events():
-    """Server-sent event stream of agent activity.
+async def events(replay: int = 20):
+    """Server-sent stream of agent activity.
 
     Unauthenticated on purpose: EventSource cannot send custom headers.
-    Replays the fixture until the agent layer lands at hour 11-13.
+
+    Sends the recent history first so a client connecting mid-run still
+    sees what happened, then stays open for live events. Falls back to
+    replaying the fixture when nothing has run yet, so the frontend's
+    feed is never empty.
     """
+    q = agents.BUS.subscribe()
+    history = agents.BUS.history(replay)
+
     async def gen():
-        for e in fixture("events.json"):
-            yield f"data: {json.dumps(e)}\n\n"
-            await asyncio.sleep(1.5)
-        yield "data: {\"seq\": 0, \"agent\": \"SYSTEM\", \"level\": \"info\", " \
-              "\"message\": \"stream complete\", \"tool_call\": null, " \
-              "\"tool_result\": null}\n\n"
-    return StreamingResponse(gen(), media_type="text/event-stream")
+        try:
+            if history:
+                for e in history:
+                    yield f"data: {json.dumps(e, default=str)}\n\n"
+            else:
+                # Nothing has run. Replay the fixture so the panel has
+                # something in it, then wait for real events.
+                for e in fixture("events.json"):
+                    yield f"data: {json.dumps(e)}\n\n"
+                    await asyncio.sleep(0.4)
+
+            while True:
+                try:
+                    e = await asyncio.wait_for(q.get(), timeout=15.0)
+                    yield f"data: {json.dumps(e, default=str)}\n\n"
+                except asyncio.TimeoutError:
+                    # Comment frame keeps proxies from closing the stream.
+                    yield ": keepalive\n\n"
+        finally:
+            agents.BUS.unsubscribe(q)
+
+    return StreamingResponse(gen(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache",
+                                      "X-Accel-Buffering": "no"})
+
+
+@app.get("/api/events/history")
+def events_history(limit: int = 50):
+    """Non-streaming version, for clients that would rather poll."""
+    h = agents.BUS.history(limit)
+    return h if h else fixture("events.json")
+
+
+@app.post("/api/events/capture")
+def events_capture():
+    """Freeze the current event history as the demo fixture.
+
+    The Gemini free tier allows twenty calls a day per model and a clean
+    pipeline run is about nine, so the demo replays a captured real run.
+    Call this once after a good live run.
+    """
+    return agents.capture()
 
 
 # ---------------------------------------------------------------- meta
@@ -287,4 +401,7 @@ def health():
         "screening_state": s.get("state"),
         "conjunctions": len(db.state()["order"]),
         "plans": len(db.state()["plans"]),
+        "ledger_entries": len(db.ledger()),
+        "mock_agents": agents.llm.MOCK or not agents.llm.available(),
+        "events_buffered": len(agents.BUS.history(999)),
     }

@@ -345,10 +345,51 @@ def pipeline(max_conjunctions=MAX_CONJUNCTIONS, verbose=True):
     return results
 
 
+# ------------------------------------------------------------- capture
+
+def capture(path=None, limit=999):
+    """Freeze the current event history into fixtures/events.json.
+
+    The free tier allows twenty model calls a day per model, and a clean
+    pipeline run is about nine. So the demo runs off a captured real run
+    rather than a live one - disclose that, it is the normal answer to a
+    rate-limited dependency.
+
+    Workflow:
+        MOCK_AGENTS=0  python agents.py          (one good live run)
+        python agents.py --capture               (freeze it)
+        DEMO_MODE=1                              (replay it)
+    """
+    import os
+
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__),
+                            "fixtures", "events.json")
+
+    history = BUS.history(limit)
+    if not history:
+        return {"error": "no events in memory - run the pipeline first"}
+
+    with open(path, "w") as f:
+        json.dump(history, f, indent=2)
+
+    return {"written": path, "events": len(history),
+            "agents": sorted({e["agent"] for e in history})}
+
+
+def replay_source():
+    """Where /api/events would currently get its data from."""
+    return "live" if BUS.history(1) else "fixture"
+
+
 if __name__ == "__main__":
     import sys
 
     args = sys.argv[1:]
+
+    if "--capture" in args:
+        print(json.dumps(capture(), indent=2))
+        raise SystemExit(0)
 
     if args and args[0].upper() in PROMPTS:
         agent = args[0].upper()
@@ -391,5 +432,9 @@ if __name__ == "__main__":
         print(f"  #{e['seq']} {e['entry_hash']} {e.get('maneuver_id')} "
               f"{e.get('delta_v_mms')} mm/s")
 
-    print(f"\n{len(BUS.history(999))} events emitted "
-          f"(these stream to the UI via /api/events)")
+    n = len(BUS.history(999))
+    print(f"\n{n} events emitted (these stream to the UI via /api/events)")
+
+    if not (llm.MOCK or not llm.available()):
+        print("\nThat was a live run. Freeze it as the demo fixture with:")
+        print("  python agents.py --capture")
