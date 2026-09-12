@@ -1,0 +1,6 @@
+fastapi
+httpx
+numpy
+sgp4
+anthropic
+uvicorn
