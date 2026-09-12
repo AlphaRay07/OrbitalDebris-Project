@@ -15,6 +15,7 @@ import numpy as np
 import db
 import geodetic
 import ingest
+import maneuver
 import probability
 import propagate
 import screen
@@ -81,22 +82,31 @@ def run(asset_norad=DEFAULT_ASSET, hours=propagate.HORIZON_H,
         if obj_idx is None:
             continue
 
-        # Nearest coarse step to TCA, for the state vectors.
         tca = c["tca"]
-        k = int(min(range(len(times)),
-                    key=lambda i: abs((times[i] - tca).total_seconds())))
 
         # Time from now to TCA. Drives most of the covariance growth at a
         # 72 hour horizon, so a conjunction three days out is genuinely
         # more uncertain than one three hours out.
         lead_h = max(0.0, (tca - times[0]).total_seconds() / 3600.0)
 
+        # State vectors at the exact TCA, not at the nearest 60 s grid
+        # step. At 14 km/s closing speed a half-minute of offset moves
+        # the encounter geometry by hundreds of km, which would make the
+        # encounter-plane miss vector disagree with the miss distance
+        # the 1 s fine pass measured.
+        r_tca, v_tca, _ = maneuver.state_at(sats, tca)
+
         assess = probability.assess(
-            r[asset_idx, k], v[asset_idx, k],
-            r[obj_idx, k], v[obj_idx, k],
+            r_tca[asset_idx], v_tca[asset_idx],
+            r_tca[obj_idx], v_tca[obj_idx],
             asset_meta, sec_meta, lead_hours=lead_h)
 
         sec_age = assess["tle_age_hours"]["secondary"]
+
+        # Grid index for the frontend's TCA marker, recomputed per
+        # request in ephemeris() since this grid's start time moves.
+        k = int(min(range(len(times)),
+                    key=lambda i: abs((times[i] - tca).total_seconds())))
 
         conjunctions.append({
             "id": None,
@@ -281,6 +291,17 @@ if __name__ == "__main__":
         print(f"\nwhat GET /api/conjunctions/{cid} adds:")
         print(f"  components_m    : {d['components_m']}")
         print(f"  encounter_plane : {d['encounter_plane']}")
+
+        # The 2D encounter-plane miss must agree with the 3D miss
+        # distance: they are the same geometry viewed two ways.
+        ep = d["encounter_plane"]
+        plane_km = (ep["miss_x_m"] ** 2 + ep["miss_y_m"] ** 2) ** 0.5 / 1000
+        print(f"\n  consistency check")
+        print(f"    3D miss distance      : {d['miss_distance_km']:.3f} km")
+        print(f"    encounter-plane miss  : {plane_km:.3f} km")
+        gap = abs(plane_km - d["miss_distance_km"])
+        verdict = "ok" if gap < 0.5 else "DISAGREE - investigate"
+        print(f"    difference            : {gap:.3f} km  ({verdict})")
 
         print(f"\nbuilding ephemeris for {cid}...")
         t0 = _t.time()
