@@ -1,0 +1,116 @@
+{
+  "cdm_id": "CDM-0001",
+  "status": "PLANNED",
+  "generated_at": "2026-09-12T06:03:00Z",
+  "target_pc": 0.0001,
+  "recommended_id": "MNV-003",
+  "rejected_ids": [
+    "MNV-004"
+  ],
+  "rejection_reason": "cascade check failed: burn creates a new conjunction with STARLINK-4127 at Pc 1.4e-4 on day 3",
+  "candidates": [
+    {
+      "id": "MNV-001",
+      "delta_v_mms": 0.8,
+      "direction": "ALONG_TRACK_RETROGRADE",
+      "burn_epoch": "2026-09-13T12:25:33Z",
+      "lead_orbits": 0.5,
+      "new_miss_distance_km": 0.51,
+      "new_pc": 0.00024,
+      "cascade_check": "PASS",
+      "cascade_detail": null,
+      "feasible": false
+    },
+    {
+      "id": "MNV-002",
+      "delta_v_mms": 1.5,
+      "direction": "ALONG_TRACK_RETROGRADE",
+      "burn_epoch": "2026-09-13T12:25:33Z",
+      "lead_orbits": 0.5,
+      "new_miss_distance_km": 0.78,
+      "new_pc": 0.00011,
+      "cascade_check": "PASS",
+      "cascade_detail": null,
+      "feasible": false
+    },
+    {
+      "id": "MNV-003",
+      "delta_v_mms": 3.0,
+      "direction": "ALONG_TRACK_RETROGRADE",
+      "burn_epoch": "2026-09-13T11:39:07Z",
+      "lead_orbits": 1.0,
+      "new_miss_distance_km": 1.42,
+      "new_pc": 2.8e-05,
+      "cascade_check": "PASS",
+      "cascade_detail": null,
+      "feasible": true
+    },
+    {
+      "id": "MNV-004",
+      "delta_v_mms": 4.2,
+      "direction": "ALONG_TRACK_RETROGRADE",
+      "burn_epoch": "2026-09-13T11:39:07Z",
+      "lead_orbits": 1.0,
+      "new_miss_distance_km": 1.98,
+      "new_pc": 9.6e-06,
+      "cascade_check": "FAIL",
+      "cascade_detail": {
+        "new_conjunction_with": "STARLINK-4127",
+        "tca": "2026-09-16T20:12:00Z",
+        "miss_distance_km": 0.81,
+        "pc": 0.00014
+      },
+      "feasible": false
+    },
+    {
+      "id": "MNV-005",
+      "delta_v_mms": 6.0,
+      "direction": "ALONG_TRACK_RETROGRADE",
+      "burn_epoch": "2026-09-13T10:06:14Z",
+      "lead_orbits": 2.0,
+      "new_miss_distance_km": 3.11,
+      "new_pc": 3.1e-06,
+      "cascade_check": "PASS",
+      "cascade_detail": null,
+      "feasible": true
+    },
+    {
+      "id": "MNV-006",
+      "delta_v_mms": 9.5,
+      "direction": "ALONG_TRACK_RETROGRADE",
+      "burn_epoch": "2026-09-13T10:06:14Z",
+      "lead_orbits": 2.0,
+      "new_miss_distance_km": 4.72,
+      "new_pc": 8e-07,
+      "cascade_check": "PASS",
+      "cascade_detail": null,
+      "feasible": true
+    },
+    {
+      "id": "MNV-007",
+      "delta_v_mms": 14.0,
+      "direction": "ALONG_TRACK_RETROGRADE",
+      "burn_epoch": "2026-09-13T07:00:28Z",
+      "lead_orbits": 4.0,
+      "new_miss_distance_km": 9.4,
+      "new_pc": 1.2e-07,
+      "cascade_check": "PASS",
+      "cascade_detail": null,
+      "feasible": true
+    },
+    {
+      "id": "MNV-008",
+      "delta_v_mms": 22.0,
+      "direction": "ALONG_TRACK_RETROGRADE",
+      "burn_epoch": "2026-09-13T07:00:28Z",
+      "lead_orbits": 4.0,
+      "new_miss_distance_km": 14.6,
+      "new_pc": 2e-08,
+      "cascade_check": "PASS",
+      "cascade_detail": null,
+      "feasible": true
+    }
+  ],
+  "propellant_estimate_g": 42.0,
+  "notes": "Along-track retrograde burn 1 orbit before TCA. Post-burn propagation uses two-body + J2."
+}

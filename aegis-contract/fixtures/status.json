@@ -15,15 +15,9 @@
     "completed_at": "2026-09-12T05:58:00Z"
   },
   "counts": {
-<<<<<<< HEAD
     "red": 1,
     "amber": 2,
     "green": 4
-=======
-    "red": 3,
-    "amber": 4,
-    "green": 1
->>>>>>> 7f1f9b5 (feat(server): Implement SGP4 propagation engine, J2 Kepler solver, and FastAPI backend)
   },
   "demo_mode": true,
   "mock_agents": false

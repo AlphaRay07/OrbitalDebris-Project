@@ -1,0 +1,142 @@
+[
+  {
+    "id": "CDM-0001",
+    "primary": {
+      "norad_id": "25544",
+      "name": "ISS (ZARYA)",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "NASA",
+      "tle_age_hours": 6.2
+    },
+    "secondary": {
+      "norad_id": "SIM0001",
+      "name": "SIM-DEBRIS-001 (COSMOS 1408 DEB)",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 9.8
+    },
+    "tca": "2026-09-13T13:12:00Z",
+    "miss_distance_km": 0.412,
+    "relative_speed_kms": 14.21,
+    "pc": 0.00032,
+    "risk": "RED",
+    "status": "TRIAGED",
+    "simulated": true
+  },
+  {
+    "id": "CDM-0002",
+    "primary": {
+      "norad_id": "25544",
+      "name": "ISS (ZARYA)",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "NASA",
+      "tle_age_hours": 6.2
+    },
+    "secondary": {
+      "norad_id": "33421",
+      "name": "FENGYUN 1C DEB",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 31.5
+    },
+    "tca": "2026-09-13T00:41:00Z",
+    "miss_distance_km": 2.108,
+    "relative_speed_kms": 13.04,
+    "pc": 4.7e-05,
+    "risk": "AMBER",
+    "status": "TRIAGED",
+    "simulated": false
+  },
+  {
+    "id": "CDM-0003",
+    "primary": {
+      "norad_id": "25544",
+      "name": "ISS (ZARYA)",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "NASA",
+      "tle_age_hours": 6.2
+    },
+    "secondary": {
+      "norad_id": "34677",
+      "name": "COSMOS 2251 DEB",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 14.2
+    },
+    "tca": "2026-09-14T02:03:00Z",
+    "miss_distance_km": 3.377,
+    "relative_speed_kms": 11.86,
+    "pc": 1.9e-05,
+    "risk": "AMBER",
+    "status": "TRIAGED",
+    "simulated": false
+  },
+  {
+    "id": "CDM-0004",
+    "primary": {
+      "norad_id": "25544",
+      "name": "ISS (ZARYA)",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "NASA",
+      "tle_age_hours": 6.2
+    },
+    "secondary": {
+      "norad_id": "34012",
+      "name": "IRIDIUM 33 DEB",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 22.7
+    },
+    "tca": "2026-09-12T15:27:00Z",
+    "miss_distance_km": 4.219,
+    "relative_speed_kms": 9.55,
+    "pc": 6.1e-06,
+    "risk": "GREEN",
+    "status": "TRIAGED",
+    "simulated": false
+  },
+  {
+    "id": "CDM-0005",
+    "primary": {
+      "norad_id": "25544",
+      "name": "ISS (ZARYA)",
+      "object_type": "PAYLOAD",
+      "size_class": "LARGE",
+      "maneuverable": true,
+      "operator": "NASA",
+      "tle_age_hours": 6.2
+    },
+    "secondary": {
+      "norad_id": "58901",
+      "name": "CZ-6A DEB",
+      "object_type": "DEBRIS",
+      "size_class": "SMALL",
+      "maneuverable": false,
+      "operator": null,
+      "tle_age_hours": 5.1
+    },
+    "tca": "2026-09-14T10:18:00Z",
+    "miss_distance_km": 4.64,
+    "relative_speed_kms": 12.73,
+    "pc": 2.4e-06,
+    "risk": "GREEN",
+    "status": "TRIAGED",
+    "simulated": false
+  }
+]

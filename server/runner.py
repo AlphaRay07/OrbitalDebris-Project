@@ -311,4 +311,8 @@ if __name__ == "__main__":
         print(f"  first primary point: {eph['tracks'][0]['track'][0]}")
         print(f"  tca_index: {eph['tca_index']}")
     else:
+<<<<<<< HEAD
         print("\nno conjunctions stored - raise the threshold")
+=======
+        print("\nno conjunctions stored - raise the threshold")
+>>>>>>> 7f1f9b5 (feat(server): Implement SGP4 propagation engine, J2 Kepler solver, and FastAPI backend)

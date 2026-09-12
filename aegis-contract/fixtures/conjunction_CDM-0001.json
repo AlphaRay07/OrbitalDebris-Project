@@ -1,0 +1,82 @@
+{
+  "id": "CDM-0001",
+  "primary": {
+    "norad_id": "25544",
+    "name": "ISS (ZARYA)",
+    "object_type": "PAYLOAD",
+    "size_class": "LARGE",
+    "maneuverable": true,
+    "operator": "NASA",
+    "tle_age_hours": 6.2
+  },
+  "secondary": {
+    "norad_id": "SIM0001",
+    "name": "SIM-DEBRIS-001 (COSMOS 1408 DEB)",
+    "object_type": "DEBRIS",
+    "size_class": "SMALL",
+    "maneuverable": false,
+    "operator": null,
+    "tle_age_hours": 9.8
+  },
+  "tca": "2026-09-13T13:12:00Z",
+  "miss_distance_km": 0.412,
+  "relative_speed_kms": 14.21,
+  "pc": 0.00032,
+  "risk": "RED",
+  "status": "TRIAGED",
+  "simulated": true,
+  "components_m": {
+    "radial": -186.0,
+    "in_track": 358.0,
+    "cross_track": 74.0
+  },
+  "encounter_plane": {
+    "miss_x_m": 240.0,
+    "miss_y_m": -110.0,
+    "sigma_major_m": 380.0,
+    "sigma_minor_m": 95.0,
+    "rotation_deg": 22.0,
+    "hbr_m": 5.5,
+    "pc": 0.00032
+  },
+  "pc_history": [
+    {
+      "t": "2026-09-09T06:00:00Z",
+      "pc": 1.1e-05
+    },
+    {
+      "t": "2026-09-09T18:00:00Z",
+      "pc": 2e-05
+    },
+    {
+      "t": "2026-09-10T06:00:00Z",
+      "pc": 4.4e-05
+    },
+    {
+      "t": "2026-09-10T18:00:00Z",
+      "pc": 9.8e-05
+    },
+    {
+      "t": "2026-09-11T06:00:00Z",
+      "pc": 0.00017
+    },
+    {
+      "t": "2026-09-11T18:00:00Z",
+      "pc": 0.00026
+    },
+    {
+      "t": "2026-09-12T06:00:00Z",
+      "pc": 0.00032
+    }
+  ],
+  "assumptions": {
+    "covariance_source": "synthetic",
+    "sigma_at_epoch_m": {
+      "radial": 100,
+      "in_track": 500,
+      "cross_track": 100
+    },
+    "growth_exponent": 1.5,
+    "hbr_source": "rcs_size_class"
+  }
+}

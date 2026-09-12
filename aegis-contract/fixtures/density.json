@@ -1,0 +1,77 @@
+{
+  "shell_km": 25,
+  "shells": [
+    {
+      "alt_min_km": 400,
+      "alt_max_km": 425,
+      "object_count": 812,
+      "conjunction_count": 3
+    },
+    {
+      "alt_min_km": 425,
+      "alt_max_km": 450,
+      "object_count": 1104,
+      "conjunction_count": 5
+    },
+    {
+      "alt_min_km": 450,
+      "alt_max_km": 475,
+      "object_count": 1631,
+      "conjunction_count": 9
+    },
+    {
+      "alt_min_km": 475,
+      "alt_max_km": 500,
+      "object_count": 2288,
+      "conjunction_count": 14
+    },
+    {
+      "alt_min_km": 500,
+      "alt_max_km": 525,
+      "object_count": 2911,
+      "conjunction_count": 21
+    },
+    {
+      "alt_min_km": 525,
+      "alt_max_km": 550,
+      "object_count": 3420,
+      "conjunction_count": 26
+    },
+    {
+      "alt_min_km": 550,
+      "alt_max_km": 575,
+      "object_count": 2984,
+      "conjunction_count": 19
+    },
+    {
+      "alt_min_km": 575,
+      "alt_max_km": 600,
+      "object_count": 2110,
+      "conjunction_count": 11
+    },
+    {
+      "alt_min_km": 600,
+      "alt_max_km": 625,
+      "object_count": 1502,
+      "conjunction_count": 7
+    },
+    {
+      "alt_min_km": 625,
+      "alt_max_km": 650,
+      "object_count": 988,
+      "conjunction_count": 4
+    },
+    {
+      "alt_min_km": 650,
+      "alt_max_km": 675,
+      "object_count": 640,
+      "conjunction_count": 2
+    },
+    {
+      "alt_min_km": 675,
+      "alt_max_km": 700,
+      "object_count": 401,
+      "conjunction_count": 1
+    }
+  ]
+}
