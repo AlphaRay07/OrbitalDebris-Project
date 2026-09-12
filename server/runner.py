@@ -182,10 +182,19 @@ def ephemeris(cdm_id, hours=propagate.HORIZON_H):
     jd, fr, times = propagate.time_grid(hours=hours, step_s=EPHEMERIS_STEP_S)
     err, r, v = propagate.propagate(sats, jd, fr)
 
+    # Recompute the index against this grid. The one stored at screening
+    # time is relative to that grid's start, which has since moved.
+    from datetime import datetime, timezone
+    tca_dt = datetime.strptime(c["tca"], "%Y-%m-%dT%H:%M:%SZ").replace(
+        tzinfo=timezone.utc)
+    tca_index = int(round((tca_dt - times[0]).total_seconds()
+                          / EPHEMERIS_STEP_S))
+    tca_index = max(0, min(tca_index, len(times) - 1))
+
     return {
         "cdm_id": cdm_id,
         "tca": c["tca"],
-        "tca_index": c.get("_tca_index", 0),
+        "tca_index": tca_index,
         "step_seconds": EPHEMERIS_STEP_S,
         "epochs": [iso(t) for t in times],
         "tracks": [

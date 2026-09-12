@@ -18,6 +18,7 @@ from fastapi.responses import StreamingResponse
 
 import db
 import ingest
+import maneuver
 import probability
 import runner
 
@@ -191,10 +192,49 @@ def get_plan(cdm_id: str):
 
 
 @app.post("/api/plan/{cdm_id}")
-def make_plan(cdm_id: str):
-    # maneuver.py lands at hour 8-11. Until then the fixture stands in,
-    # which keeps the frontend's planner screen fully buildable.
+def make_plan(cdm_id: str, cascade: bool = False):
+    """Solve for avoidance burns.
+
+    cascade defaults to False because re-screening each candidate against
+    the full catalog for seven days takes minutes - far too long to hold
+    a request open. The solve itself is a few seconds. Run the cascade
+    check separately via POST /api/plan/{id}/cascade.
+    """
+    if DEMO_MODE:
+        return fixture(f"plan_{cdm_id}.json")
+
+    if db.conjunction(cdm_id) is None:
+        return fixture(f"plan_{cdm_id}.json")
+
+    try:
+        plan = maneuver.solve(cdm_id, run_cascade=cascade, verbose=False)
+        if plan is not None:
+            return plan
+    except Exception as e:
+        print(f"[plan] {type(e).__name__}: {e}")
     return fixture(f"plan_{cdm_id}.json")
+
+
+@app.post("/api/plan/{cdm_id}/cascade")
+def run_cascade(cdm_id: str, background: BackgroundTasks,
+                top_n: int = 3):
+    """Re-screen the top candidates' post-burn paths against the catalog.
+
+    Backgrounded: each candidate is propagated against all 19k objects
+    for seven days. The frontend polls GET /api/plan/{id} and watches
+    cascade_check flip from PENDING to PASS or FAIL.
+    """
+    if DEMO_MODE or db.conjunction(cdm_id) is None:
+        return {"state": "complete", "note": "demo mode - stored plan"}
+
+    def job():
+        try:
+            maneuver.solve(cdm_id, run_cascade=True, verbose=True)
+        except Exception as e:
+            print(f"[cascade] {type(e).__name__}: {e}")
+
+    background.add_task(job)
+    return {"state": "running", "cdm_id": cdm_id, "top_n": top_n}
 
 
 @app.post("/api/coordinate/{cdm_id}")
@@ -246,4 +286,5 @@ def health():
         "serving": "fixtures" if not live() else "live",
         "screening_state": s.get("state"),
         "conjunctions": len(db.state()["order"]),
+        "plans": len(db.state()["plans"]),
     }
