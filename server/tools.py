@@ -66,7 +66,9 @@ SCHEMAS = {
             "List the close approaches found by the last screening run, "
             "already ranked by risk then collision probability. Returns "
             "object names, miss distances, closing speeds, collision "
-            "probabilities and risk bands."),
+            "probabilities and risk bands. Note that 'returned' is a page "
+            "size - use 'total_on_file' when stating how many conjunctions "
+            "exist."),
         "input_schema": {
             "type": "object",
             "properties": {
@@ -219,6 +221,21 @@ def schemas_for(agent):
 
 # -------------------------------------------------------- implementations
 
+def sig(x, digits=3):
+    """Round to significant figures for anything a model will read aloud.
+
+    Collision probabilities span 300 orders of magnitude, so a raw float
+    comes back as 2.47294444207114e-11 and the model echoes every digit
+    into the operations feed. Three significant figures is all the
+    precision the number actually carries.
+    """
+    if x is None:
+        return None
+    try:
+        return float(f"{float(x):.{digits}g}")
+    except (TypeError, ValueError):
+        return x
+
 def _get_catalog_status():
     try:
         cat = ingest.load()
@@ -258,20 +275,26 @@ def _screen_catalog(asset_norad_id, horizon_hours=72, threshold_km=50.0):
 
 def _get_conjunctions(risk="ALL", limit=10):
     rows = db.conjunction_list()
+    total = len(rows)
     if risk and risk != "ALL":
         rows = [r for r in rows if r["risk"] == risk]
+    matching = len(rows)
     rows = rows[:int(limit)]
+    # Three separate counts, because a model given only a page size will
+    # report the page size as the total.
     return {
-        "count": len(rows),
+        "total_on_file": total,
+        "matching_filter": matching,
+        "returned": len(rows),
         "conjunctions": [{
             "cdm_id": r["id"],
             "object": r["secondary"]["name"],
             "object_type": r["secondary"]["object_type"],
             "maneuverable": r["secondary"]["maneuverable"],
             "tca": r["tca"],
-            "miss_distance_km": r["miss_distance_km"],
-            "closing_speed_kms": r["relative_speed_kms"],
-            "collision_probability": r["pc"],
+            "miss_distance_km": sig(r["miss_distance_km"], 4),
+            "closing_speed_kms": sig(r["relative_speed_kms"], 4),
+            "collision_probability": sig(r["pc"]),
             "risk": r["risk"],
         } for r in rows],
     }
@@ -288,11 +311,13 @@ def _assess_conjunction(cdm_id):
         "secondary_maneuverable": c["secondary"]["maneuverable"],
         "tca": c["tca"],
         "hours_to_tca": c.get("lead_hours"),
-        "miss_distance_km": c["miss_distance_km"],
-        "closing_speed_kms": c["relative_speed_kms"],
-        "miss_components_m": c.get("components_m"),
-        "encounter_plane": c.get("encounter_plane"),
-        "collision_probability": c["pc"],
+        "miss_distance_km": sig(c["miss_distance_km"], 4),
+        "closing_speed_kms": sig(c["relative_speed_kms"], 4),
+        "miss_components_m": {k: sig(v, 4)
+                              for k, v in (c.get("components_m") or {}).items()},
+        "encounter_plane": {k: sig(v, 4)
+                            for k, v in (c.get("encounter_plane") or {}).items()},
+        "collision_probability": sig(c["pc"]),
         "risk": c["risk"],
         "tle_age_hours": {
             "primary": c["primary"].get("tle_age_hours"),
@@ -313,8 +338,8 @@ def _solve_maneuver(cdm_id, target_pc=1e-4):
 
     return {
         "cdm_id": cdm_id,
-        "baseline_miss_km": plan["baseline_miss_km"],
-        "baseline_pc": plan["baseline_pc"],
+        "baseline_miss_km": sig(plan["baseline_miss_km"], 4),
+        "baseline_pc": sig(plan["baseline_pc"]),
         "candidates_evaluated": len(plan["candidates"]),
         "candidates_that_help": len(helpful),
         "recommended_id": plan["recommended_id"],
@@ -324,10 +349,10 @@ def _solve_maneuver(cdm_id, target_pc=1e-4):
             "direction": c["direction"],
             "burn_epoch": c["burn_epoch"],
             "lead_orbits": c["lead_orbits"],
-            "new_miss_distance_km": c["new_miss_distance_km"],
-            "separation_gained_km": c["miss_gain_km"],
-            "new_collision_probability": c["new_pc"],
-            "propellant_grams": c["propellant_g"],
+            "new_miss_distance_km": sig(c["new_miss_distance_km"], 4),
+            "separation_gained_km": sig(c["miss_gain_km"], 3),
+            "new_collision_probability": sig(c["new_pc"]),
+            "propellant_grams": sig(c["propellant_g"], 4),
             "cascade_check": c["cascade_check"],
         } for c in helpful[:5]],
         "note": plan["notes"],
@@ -351,7 +376,10 @@ def _rescreen_trajectory(cdm_id, top_n=2):
             "maneuver_id": c["id"],
             "delta_v_mms": c["delta_v_mms"],
             "verdict": c["cascade_check"],
-            "new_conjunction": c["cascade_detail"],
+            "new_conjunction": ({k: sig(v) if isinstance(v, (int, float))
+                                 else v
+                                 for k, v in c["cascade_detail"].items()}
+                                if c["cascade_detail"] else None),
         } for c in checked],
     }
 
