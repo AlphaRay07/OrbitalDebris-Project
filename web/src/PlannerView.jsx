@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getPlan } from "./api";
+import { createPlan, getPlan, runCascadeCheck } from "./api";
 
 export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
   const [plan, setPlan] = useState(null);
@@ -10,30 +10,56 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
   useEffect(() => {
     if (!cdmId) return;
     let isMounted = true;
+    let interval = null;
 
-    const fetchPlan = (isFirstCall = false) => {
-      if (isFirstCall) setLoading(true);
-      getPlan(cdmId)
-        .then((data) => {
-          if (!isMounted) return;
-          setPlan(data);
-          if (data && data.recommended_id && isFirstCall) {
-            setSelectedCandidateId(data.recommended_id);
-          }
-          setLoading(false);
-        })
-        .catch((err) => {
-          if (!isMounted) return;
-          setError(err.message);
-          setLoading(false);
-        });
+    setLoading(true);
+    setError(null);
+    setPlan(null);
+    setSelectedCandidateId(null);
+
+    const show = (data, selectRecommended) => {
+      if (!isMounted) return;
+      setPlan(data);
+      if (data && data.recommended_id && selectRecommended) {
+        setSelectedCandidateId(data.recommended_id);
+      }
+      setLoading(false);
     };
 
-    fetchPlan(true);
-    const interval = setInterval(() => fetchPlan(false), 3000);
+    const poll = () => {
+      if (!isMounted) return;
+      interval = setInterval(() => {
+        getPlan(cdmId).then((data) => show(data, false)).catch(() => {});
+      }, 3000);
+    };
+
+    // GET only reads a stored plan - the solver runs on POST. Without the
+    // POST fallback this 404s for every conjunction that has never been
+    // planned, which is all of them except the CDM-0001 fixture.
+    getPlan(cdmId)
+      .then((data) => {
+        show(data, true);
+        poll();
+      })
+      .catch(() =>
+        createPlan(cdmId)
+          .then((data) => {
+            show(data, true);
+            // Cascade re-screening runs in the background and rewrites the
+            // stored plan, so poll for cascade_check leaving PENDING.
+            runCascadeCheck(cdmId).catch(() => {});
+            poll();
+          })
+          .catch((err) => {
+            if (!isMounted) return;
+            setError(err.message);
+            setLoading(false);
+          })
+      );
+
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
     };
   }, [cdmId]);
 
@@ -69,6 +95,10 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
     candidates.find((c) => c.id === selectedCandidateId) ||
     candidates.find((c) => c.id === recommended_id) ||
     candidates[0];
+
+  const rejectedDetail = candidates.find(
+    (c) => rejected_ids.includes(c.id) && c.cascade_detail
+  );
 
   // Pareto Chart Math Calculations
   const chartWidth = 560;
@@ -126,18 +156,24 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
             <div className="flex items-center justify-between text-xs font-bold text-[#E5484D]">
               <span className="flex items-center gap-1.5 uppercase">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#E5484D] animate-ping" />
-                ⚠️ CASCADE CHECK FAILURE BANNER
+                ⚠️ CASCADE CHECK FAILURE
               </span>
               <span className="px-1.5 py-0.5 rounded bg-red-900 border border-red-700 text-[10px] text-white">
-                MNV-004 REJECTED
+                {rejected_ids.join(", ") || "CANDIDATE"} REJECTED
               </span>
             </div>
             <div className="text-xs font-semibold text-white mt-1">
               "{rejection_reason}"
             </div>
-            <div className="text-[10px] text-red-300/80">
-              Note: Candidate MNV-004 meets target Pc, but the resulting orbital shift causes a secondary collision with STARLINK-4127 on day 3.
-            </div>
+            {rejectedDetail && (
+              <div className="text-[10px] text-red-300/80">
+                Note: Candidate {rejectedDetail.id} meets target P<sub>c</sub>, but the
+                resulting orbital shift causes a secondary conjunction with{" "}
+                {rejectedDetail.cascade_detail.new_conjunction_with} at{" "}
+                {rejectedDetail.cascade_detail.miss_distance_km} km on{" "}
+                {rejectedDetail.cascade_detail.tca}.
+              </div>
+            )}
           </div>
         )}
 
