@@ -411,9 +411,16 @@ def cascade(candidate, conjunction, days=CASCADE_DAYS, verbose=True):
     r_new = np.array(state[0])
     v_new = np.array(state[1])
 
+    # The post-burn state is at TCA, so the grid has to start there too.
+    # Defaulting to now compares the trajectory against the catalog offset
+    # by the whole time-to-TCA - 60 hours on a 72 hour screen, which at
+    # 7.7 km/s pairs the asset with objects half an orbit away.
+    tca = parse_iso(conjunction["tca"])
+
     cat = ingest.load()
     sats, meta = propagate.build(cat)
-    jd, fr, times = propagate.time_grid(hours=days * 24, step_s=120)
+    jd, fr, times = propagate.time_grid(start=tca, hours=days * 24,
+                                        step_s=120)
     err, r_all, v_all = propagate.propagate(sats, jd, fr)
 
     # Post-burn trajectory, coasted forward on the same grid. Velocities
@@ -461,10 +468,14 @@ def cascade(candidate, conjunction, days=CASCADE_DAYS, verbose=True):
     m = meta[idx]
     ki = min(step, len(times) - 1)
 
+    # Uncertainty grows with time from now, and times[0] is TCA, so the
+    # original lead to TCA has to be carried in on top of the offset.
+    lead_hours = (conjunction.get("lead_hours", 0.0)
+                  + (times[ki] - times[0]).total_seconds() / 3600.0)
+
     assess = probability.assess(
         post[ki], post_v[ki], r_all[idx, ki], v_all[idx, ki],
-        conjunction["primary"], m,
-        lead_hours=(times[ki] - times[0]).total_seconds() / 3600.0)
+        conjunction["primary"], m, lead_hours=lead_hours)
 
     detail = {
         "new_conjunction_with": m["name"],
