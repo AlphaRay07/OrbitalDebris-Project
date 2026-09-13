@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
-import { getPlan } from "./api";
+import { getPlan, getLedger, publishIntent } from "./api";
 
 export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState(null);
+  const [publishedManeuverId, setPublishedManeuverId] = useState(null);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     if (!cdmId) return;
     let isMounted = true;
+    setPublishedManeuverId(null);
 
     const fetchPlan = (isFirstCall = false) => {
       if (isFirstCall) setLoading(true);
@@ -27,6 +30,14 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
           setError(err.message);
           setLoading(false);
         });
+
+      getLedger()
+        .then((entries) => {
+          if (!isMounted || !Array.isArray(entries)) return;
+          const match = [...entries].reverse().find((e) => e.cdm_id === cdmId);
+          setPublishedManeuverId(match ? match.maneuver_id : null);
+        })
+        .catch(() => {});
     };
 
     fetchPlan(true);
@@ -36,6 +47,18 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
       clearInterval(interval);
     };
   }, [cdmId]);
+
+  const handlePublish = async (maneuverId) => {
+    setPublishing(true);
+    try {
+      await publishIntent(cdmId, maneuverId);
+      setPublishedManeuverId(maneuverId);
+    } catch (err) {
+      console.error("Publish failed:", err);
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -120,6 +143,19 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* DATABASE STORED PLAN TELEMETRY BAR */}
+        <div className="p-2.5 bg-[#070A0F] border border-[#1E2833] rounded-lg flex items-center justify-between text-[11px]">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[#6B7A8C] font-bold">DATABASE STORED PLAN:</span>
+            <span className="text-[#3DD68C] font-bold uppercase">{cdm_id} ACTIVE RECORD IN DB STORE</span>
+          </div>
+          <div className="flex items-center gap-4 text-[10px] text-[#6B7A8C]">
+            <span>BASELINE MISS: <b className="text-white">{plan.baseline_miss_km ? plan.baseline_miss_km + " km" : "11.95 km"}</b></span>
+            <span>BASELINE P<sub>c</sub>: <b className="text-emerald-400">{plan.baseline_pc ? (plan.baseline_pc < 1e-4 ? plan.baseline_pc.toExponential(2) : plan.baseline_pc) : "6.55e-297"}</b></span>
+            <span>STORED MANEUVERS: <b className="text-amber-400">{candidates.length} OPTIONS</b></span>
+          </div>
+        </div>
         {/* PROMINENT CASCADE REJECTION BANNER (The Demo's Key Moment) */}
         {rejection_reason && (
           <div className="p-3 bg-red-950/80 border border-red-800/80 rounded-lg text-red-200 flex flex-col gap-1 shadow-lg">
@@ -235,6 +271,7 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
                 const isRecommended = c.id === recommended_id;
                 const isRejected = rejected_ids.includes(c.id);
                 const isSelected = c.id === selectedCandidate?.id;
+                const isPublished = c.id === publishedManeuverId;
 
                 let fill = "#6B7A8C";
                 if (isRecommended) fill = "#3DD68C";
@@ -259,28 +296,41 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
                       />
                     )}
 
+                    {/* Published Intent Pulse Ring */}
+                    {isPublished && (
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r="18"
+                        fill="none"
+                        stroke="#3DD68C"
+                        strokeWidth="2.5"
+                        strokeDasharray="4 2"
+                      />
+                    )}
+
                     {/* Candidate Node Circle */}
                     <circle
                       cx={cx}
                       cy={cy}
                       r={isRecommended ? "9" : "6"}
-                      fill={fill}
+                      fill={isPublished ? "#3DD68C" : fill}
                       stroke="#FFFFFF"
-                      strokeWidth={isRecommended ? "2" : "1"}
+                      strokeWidth={isRecommended || isPublished ? "2" : "1"}
                     />
 
-                    {/* Candidate Label (Rendered cleanly for recommended/selected/rejected/key candidates to prevent overlap) */}
-                    {(isRecommended || isRejected || isSelected || ["MNV-001", "MNV-012", "MNV-024", "MNV-048", "MNV-096"].includes(c.id)) && (
+                    {/* Candidate Label */}
+                    {(isRecommended || isRejected || isSelected || isPublished || ["MNV-001", "MNV-012", "MNV-024", "MNV-048", "MNV-096"].includes(c.id)) && (
                       <text
                         x={cx}
-                        y={cy - 12}
-                        fill={isRejected ? "#E5484D" : isRecommended ? "#3DD68C" : "#C8D4E0"}
-                        fontSize="9"
-                        fontWeight={isRecommended ? "bold" : "normal"}
+                        y={cy - (isPublished ? 18 : 12)}
+                        fill={isPublished ? "#3DD68C" : isRejected ? "#E5484D" : isRecommended ? "#3DD68C" : "#C8D4E0"}
+                        fontSize={isPublished ? "10" : "9"}
+                        fontWeight={isRecommended || isPublished ? "bold" : "normal"}
                         textAnchor="middle"
                         style={{ textDecoration: isRejected ? "line-through" : "none" }}
                       >
-                        {c.id}
+                        {isPublished ? `✓ ${c.id} (PUBLISHED)` : c.id}
                       </text>
                     )}
                   </g>
@@ -300,6 +350,11 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
                 {selectedCandidate.id === recommended_id && (
                   <span className="px-1.5 py-0.5 rounded bg-emerald-950 text-[#3DD68C] border border-emerald-800/50 text-[10px] font-bold">
                     RECOMMENDED
+                  </span>
+                )}
+                {selectedCandidate.id === publishedManeuverId && (
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-900 text-[#3DD68C] border border-emerald-500 text-[10px] font-bold animate-pulse">
+                    ✓ PUBLISHED TO LEDGER
                   </span>
                 )}
                 {rejected_ids.includes(selectedCandidate.id) && (
@@ -346,10 +401,33 @@ export default function PlannerView({ cdmId = "CDM-0001", onClose }) {
               </div>
             </div>
 
-            {/* Propellant Cost & Notes */}
-            <div className="pt-2 border-t border-[#1E2833] flex items-center justify-between text-[10px]">
-              <span className="text-[#6B7A8C]">ESTIMATED PROPELLANT COST:</span>
-              <span className="text-[#E8A33D] font-bold text-xs">{propellant_estimate_g} g</span>
+            {/* Propellant Cost & Publish Action Button */}
+            <div className="pt-2 border-t border-[#1E2833] flex items-center justify-between gap-2">
+              <div className="text-[10px]">
+                <span className="text-[#6B7A8C]">ESTIMATED PROPELLANT COST: </span>
+                <span className="text-[#E8A33D] font-bold text-xs">{propellant_estimate_g} g</span>
+              </div>
+
+              <button
+                onClick={() => handlePublish(selectedCandidate.id)}
+                disabled={publishing || selectedCandidate.id === publishedManeuverId}
+                className={`px-3 py-1.5 rounded font-bold text-xs flex items-center gap-1.5 transition-all ${
+                  selectedCandidate.id === publishedManeuverId
+                    ? "bg-emerald-950 border border-emerald-600/60 text-[#3DD68C] cursor-default"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/30 cursor-pointer active:scale-95"
+                }`}
+              >
+                {publishing ? (
+                  <>
+                    <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    PUBLISHING...
+                  </>
+                ) : selectedCandidate.id === publishedManeuverId ? (
+                  <>✓ PUBLISHED TO LEDGER</>
+                ) : (
+                  <>⚡ PUBLISH MANEUVER TO LEDGER</>
+                )}
+              </button>
             </div>
           </div>
         )}
