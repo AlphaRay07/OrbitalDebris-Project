@@ -114,8 +114,8 @@ Open `http://localhost:5173` in your browser to access the Aegis OTM Mission Con
 
 ## 👥 Contributors
 
-- **Manav Dewan** - [*@AlphaRay07*](https://github.com/AlphaRay07)
-- **Satwik**
+- **Manav Dewangan** - [*@AlphaRay07*](https://github.com/AlphaRay07)
+- **Satwik Ray** - [*@SatwiksOnGhb*](https://github.com/SatwiksOnGhb)
 
 ---
 
