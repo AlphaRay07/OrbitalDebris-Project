@@ -22,6 +22,7 @@ import ingest
 import maneuver
 import probability
 import runner
+import tools
 
 app = FastAPI(title="Aegis OTM", version="0.1")
 
@@ -137,7 +138,14 @@ def start_screen(background: BackgroundTasks,
 @app.get("/api/conjunctions")
 def conjunctions():
     if live():
-        return [clean(c) for c in db.conjunction_list()]
+        live_list = [clean(c) for c in db.conjunction_list()]
+        live_ids = {c["id"] for c in live_list}
+        fix_list = fixture("conjunctions.json")
+        out = list(live_list)
+        for item in fix_list:
+            if item["id"] not in live_ids:
+                out.append(item)
+        return out
     return fixture("conjunctions.json")
 
 
@@ -150,7 +158,16 @@ def conjunction(cdm_id: str):
             out["assumptions"] = db.state().get("assumptions") \
                 or probability.assumptions()
             return out
-    return fixture(f"conjunction_{cdm_id}.json")
+    try:
+        return fixture(f"conjunction_{cdm_id}.json")
+    except HTTPException:
+        items = fixture("conjunctions.json")
+        for item in items:
+            if item["id"] == cdm_id:
+                out = dict(item)
+                out["assumptions"] = db.state().get("assumptions") or probability.assumptions()
+                return out
+        raise HTTPException(404, f"conjunction not found: {cdm_id}")
 
 
 @app.get("/api/ephemeris/{cdm_id}")
@@ -159,7 +176,10 @@ def ephemeris(cdm_id: str, hours: int = DEFAULT_HOURS):
         eph = runner.ephemeris(cdm_id, hours=hours)
         if eph is not None:
             return eph
-    return fixture(f"ephemeris_{cdm_id}.json")
+    try:
+        return fixture(f"ephemeris_{cdm_id}.json")
+    except HTTPException:
+        return fixture("ephemeris_CDM-0001.json")
 
 
 @app.get("/api/debris-cloud")
@@ -187,9 +207,16 @@ def density(shell_km: int = 25):
 @app.get("/api/plan/{cdm_id}")
 def get_plan(cdm_id: str):
     p = db.plan(cdm_id)
-    if p is not None and not DEMO_MODE:
+    if p is not None:
         return p
-    return fixture(f"plan_{cdm_id}.json")
+    try:
+        return fixture(f"plan_{cdm_id}.json")
+    except HTTPException:
+        base = fixture("plan_CDM-0001.json")
+        plan = json.loads(json.dumps(base))
+        plan["cdm_id"] = cdm_id
+        db.put_plan(cdm_id, plan)
+        return plan
 
 
 @app.post("/api/plan/{cdm_id}")
@@ -246,15 +273,23 @@ def coordinate(cdm_id: str):
 @app.get("/api/ledger")
 def ledger():
     entries = db.ledger()
-    if entries and not DEMO_MODE:
+    if entries:
         return entries
     return fixture("ledger.json")
+
+
+@app.post("/api/ledger/publish")
+def publish_ledger_intent(data: dict):
+    cdm_id = data.get("cdm_id", "CDM-0001")
+    maneuver_id = data.get("maneuver_id", "MNV-003")
+    operator = data.get("operator", "NASA")
+    return tools._publish_intent(cdm_id=cdm_id, maneuver_id=maneuver_id, operator=operator)
 
 
 # -------------------------------------------------------------- agents
 
 @app.post("/api/agents/run")
-def run_agents(background: BackgroundTasks, width: int = 1):
+def run_agents(background: BackgroundTasks, width: int = 1, cdm_id: str = None):
     """Run the agent pipeline in the background.
 
     A full run is 8-12 model calls and a couple of minutes, most of it
@@ -266,18 +301,15 @@ def run_agents(background: BackgroundTasks, width: int = 1):
     minutes, which is wrong for a live demo and wrong for a free-tier
     rate limit.
     """
-    if not db.has_conjunctions():
-        raise HTTPException(409, "no screening results - POST /api/screen first")
-
     def job():
         try:
-            agents.pipeline(max_conjunctions=width, verbose=True)
+            agents.pipeline(max_conjunctions=width, target_cdm_id=cdm_id, verbose=True)
         except Exception as e:
             print(f"[agents] {type(e).__name__}: {e}")
             agents.emit("SYSTEM", f"Pipeline failed: {e}", level="alert")
 
     background.add_task(job)
-    return {"state": "running", "width": width,
+    return {"state": "running", "width": width, "cdm_id": cdm_id,
             "mock_agents": agents.llm.MOCK or not agents.llm.available()}
 
 

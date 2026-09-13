@@ -349,6 +349,8 @@ def _solve_maneuver(cdm_id, target_pc=1e-4):
     if plan is None:
         return {"error": f"could not plan for {cdm_id}"}
 
+    db.put_plan(cdm_id, plan)
+
     helpful = [c for c in plan["candidates"] if c["miss_gain_km"] > 0]
     helpful.sort(key=lambda c: -c["miss_gain_km"])
 
@@ -473,7 +475,7 @@ def _publish_intent(cdm_id, maneuver_id="MNV-003", operator="UNSPECIFIED", **kwa
                f"|{cand['delta_v_mms']}")
     entry_hash = hashlib.sha256(payload.encode()).hexdigest()[:8]
 
-    obj_name = c["primary"]["name"] if c and isinstance(c, dict) and "primary" in c else "ISS (ZARYA)"
+    obj_name = c["secondary"]["name"] if c and isinstance(c, dict) and "secondary" in c else (c["primary"]["name"] if c and isinstance(c, dict) and "primary" in c else "ISS (ZARYA)")
 
     entry = db.append_ledger({
         "entry_hash": entry_hash,

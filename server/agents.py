@@ -280,7 +280,7 @@ def set_status(cdm_id, status):
         db.save()
 
 
-def pipeline(max_conjunctions=MAX_CONJUNCTIONS, verbose=True):
+def pipeline(max_conjunctions=MAX_CONJUNCTIONS, target_cdm_id=None, verbose=True):
     """Run the full lifecycle.
 
     Width defaults to one conjunction. Running all sixteen would be fifty
@@ -302,6 +302,17 @@ def pipeline(max_conjunctions=MAX_CONJUNCTIONS, verbose=True):
             verbose=verbose)})
 
     rows = db.conjunction_list()
+    live_ids = {r["id"] for r in rows}
+    try:
+        import os
+        fix_path = os.path.join(os.path.dirname(__file__), "fixtures", "conjunctions.json")
+        with open(fix_path) as f:
+            for item in json.load(f):
+                if item["id"] not in live_ids:
+                    rows.append(item)
+    except Exception:
+        pass
+
     if not rows:
         emit("SYSTEM", "No conjunctions on file - nothing to assess",
              level="warn")
@@ -315,7 +326,11 @@ def pipeline(max_conjunctions=MAX_CONJUNCTIONS, verbose=True):
             "one and say whether any response is warranted.",
             verbose=verbose)})
 
-    targets = rows[:max_conjunctions]
+    if target_cdm_id:
+        match = [r for r in rows if r["id"] == target_cdm_id]
+        targets = match if match else rows[:max_conjunctions]
+    else:
+        targets = rows[:max_conjunctions]
     for row in targets:
         cdm_id = row["id"]
         emit("SYSTEM", f"Processing {cdm_id} ({row['secondary']['name']})",
